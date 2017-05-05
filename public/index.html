@@ -37,14 +37,14 @@
       <h2>Welcome to PR Demo!</h2>
       <h1>Please answer these questions</h1>
 
-      <form onsubmit="submit()">
-        <p>What is your name?<br/>
-        <input type="text" id="uname" title="First name will do" pattern="[a-zA-Z]{1,}" required>
+      <form action="#" onsubmit="return submitForm()">
+        <p>What is your first name?<br/>
+        <input type="text" id="uname" name="uname" title="First name will do">
         <div id="uname-error" class="error"></div>
         </p>
 
         <p>What is your age?<br/>
-        <input type="test" id="age">
+        <input type="test" id="age" name="age">
         <div id="age-error" class="error"></div>
         </p>
 
@@ -54,39 +54,71 @@
       <br/>
       <br/>
       <br/>
+      <p>Message from client:</p>
+      <div id="cmsg"></div>
       <p>Message from backend:</p>
-      <div id="message"/>
+      <div id="smsg"></div>
     </div>
 
     <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById("uname").addEventListener("keypress", function(){
+          document.getElementById("uname-error").innerHTML = "";
+          document.getElementById("cmsg").innerHTML = "";
+          document.getElementById("smsg").innerHTML = "";
+        });
+        document.getElementById("age").addEventListener("keypress", function(){
+          document.getElementById("age-error").innerHTML = "";
+          document.getElementById("cmsg").innerHTML = "";
+          document.getElementById("smsg").innerHTML = "";
+        });
+
+        document.getElementById("uname").focus();
+      });
+
       function validate() {
-        // make sure name is set
-        if (!uname.value) {
-          document.getElementById("uname-error").innerHTML = "Name cannot be empty";
-          return 1;
+        let retval = true;
+
+        // validate name input
+        if (! /^[a-zA-Z']{1,}$/.test(uname.value)) {
+          document.getElementById("uname-error").innerHTML = "Please enter a valid first name";
+          retval = false;
         }
 
-        // make sure age is set
-        if (!uname.age) {
-          document.getElementById("age-error").innerHTML = "Age cannot be empty";
-          return 1;
+        // validat age input
+        if (! /^[0-9]{1,}$/.test(age.value)) {
+          document.getElementById("age-error").innerHTML = "Please enter a valid age number";
+          retval = false;
         }
 
-        return 0;
+        return retval;
       }
 
-      function submit() {
-        console.log("Validating");
+      function submitForm() {
+        document.getElementById("cmsg").innerHTML = "";
+        document.getElementById("smsg").innerHTML = "";
+
         try {
           if (!validate()) {
-            return;
+            return false;
           }
 
           var db = firebase.database();
           db.ref('form-submissions/' + uname.value).set({
             uname: uname.value,
-            age: age.value
+            age: age.value,
+            result: null
           });
+
+          document.getElementById("cmsg").innerHTML = "Data submitted, waiting for update from backend";
+
+          db.ref('form-submissions/' + uname.value + '/result').on('value', function(snapshot) {
+            if (snapshot.val()) {
+              document.getElementById("cmsg").innerHTML = "Data submitted, response received";
+              document.getElementById("smsg").innerHTML = snapshot.val();
+            }
+          });
+
         } catch (e) {
           console.error(e);
         }
@@ -96,3 +128,4 @@
     </script>
   </body>
 </html>
+
